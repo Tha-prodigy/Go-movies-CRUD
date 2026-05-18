@@ -7,10 +7,11 @@ import (
 	"math/rand"
 	"net/http"
 	"strconv"
+
 	"github.com/gorilla/mux"
 )
 
-type movie struct {
+type Movie struct {
 	ID       string    `json:"id"`
 	Isbn     string    `json:"isbn"`
 	Title    string    `json:"title"`
@@ -22,7 +23,7 @@ type Director struct {
 	Lastname  string `json:"lastname"`
 }
 
-var movies []movie
+var movies []Movie
 
 // create handler functions
 func getMovies(w http.ResponseWriter, r *http.Request) {
@@ -39,6 +40,7 @@ func getMovie(w http.ResponseWriter, r *http.Request) {
 	for _, item := range movies {
 		if item.ID == mu["id"] {
 			json.NewEncoder(w).Encode(item)
+			return
 		}
 	}
 
@@ -49,7 +51,7 @@ func createMovie(w http.ResponseWriter, r *http.Request) {
 	// Set response header
 	w.Header().Set("Content-Type", "application/json")
 	// create a variable of type movie struct
-	var mov movie
+	var mov Movie
 	// Decode the client's json request body and store them in the variable
 	_ = json.NewDecoder(r.Body).Decode(&mov)
 	// use rand to generate a random number for the movie id
@@ -79,7 +81,7 @@ func updateMovie(w http.ResponseWriter, r *http.Request) {
 			// delete the movie with the specified id
 			movies = append(movies[:i], movies[i+1:]...)
 
-			var mov movie
+			var mov Movie
 			// decode data for the new movie
 			_ = json.NewDecoder(r.Body).Decode(&mov)
 			mov.ID = reqId
@@ -88,7 +90,6 @@ func updateMovie(w http.ResponseWriter, r *http.Request) {
 			json.NewEncoder(w).Encode(mov)
 			return
 
-
 		}
 	}
 
@@ -96,14 +97,14 @@ func updateMovie(w http.ResponseWriter, r *http.Request) {
 
 func main() {
 
-	movies = append(movies, movie{ID: "1", Isbn: "438227", Title: "movie 1", Director: &Director{Firstname: "John", Lastname: "Doe"}})
-	movies = append(movies, movie{ID: "2", Isbn: "555421", Title: "movie 2", Director: &Director{Firstname: "Kenedy", Lastname: "Rock"}})
+	movies = append(movies, Movie{ID: "1", Isbn: "438227", Title: "movie 1", Director: &Director{Firstname: "John", Lastname: "Doe"}})
+	movies = append(movies, Movie{ID: "2", Isbn: "555421", Title: "movie 2", Director: &Director{Firstname: "Kenedy", Lastname: "Rock"}})
 	r := mux.NewRouter()
 	r.HandleFunc("/movies", getMovies).Methods("GET")
-	r.HandleFunc("/movies{id}", getMovie).Methods("GET")
+	r.HandleFunc("/movies/{id}", getMovie).Methods("GET")
 	r.HandleFunc("/movies", createMovie).Methods("POST")
-	r.HandleFunc("/movies{id}", deleteMovie).Methods("DELETE")
-	r.HandleFunc("/movies{id}", updateMovie).Methods("PUT")
+	r.HandleFunc("/movies/{id}", deleteMovie).Methods("DELETE")
+	r.HandleFunc("/movies/{id}", updateMovie).Methods("PUT")
 
 	fmt.Println("Starting server at port 8000")
 	err := http.ListenAndServe(":8000", r)
